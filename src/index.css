@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", "PingFang SC", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Roboto Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  --color-brand-primary: #0f172a; /* Slate 900 */
+  --color-brand-secondary: #334155; /* Slate 700 */
+  --color-brand-accent: #059669; /* Emerald 600 */
+  --color-brand-risk: #be123c; /* Rose 700 */
+  --color-brand-warning: #d97706; /* Amber 600 */
+  --color-brand-bg: #f8fafc; /* Slate 50 */
+
+  @keyframes scanline {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(200%); }
+  }
+  
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  --animate-scanline: scanline 4s linear infinite;
+  --animate-marquee: marquee 20s linear infinite;
+}
+
+@layer base {
+  body {
+    @apply bg-[var(--color-brand-bg)] text-[var(--color-brand-primary)] antialiased;
+  }
+}
+
+/* Custom scrollbar for a more professional look */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-300 rounded-none hover:bg-slate-400 transition-colors;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-slate-700/50 hover:bg-slate-600;
+}
+
+.glass-panel {
+  @apply bg-white/80 backdrop-blur-sm border border-slate-200 shadow-sm;
+}
+
+.sidebar-item-active {
+  @apply bg-slate-100 text-slate-900 font-medium border-r-2 border-slate-900;
+}
+
+.decision-btn {
+  @apply px-4 py-2 rounded-md transition-all duration-200 font-medium flex items-center gap-2;
+}
+
+/* Typography Utilities */
+.text-display {
+  @apply font-bold tracking-tight leading-[0.88];
+}
+
+.text-micro {
+  @apply text-[10px] font-mono font-bold uppercase tracking-[0.3em];
+}
+
+.text-data {
+  @apply font-mono tracking-tighter;
+}
