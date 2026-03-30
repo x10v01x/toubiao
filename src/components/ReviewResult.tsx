@@ -1,5 +1,5 @@
-import React from 'react';
-import { CheckCircle2, AlertTriangle, ArrowRight, Zap, Target, ShieldAlert, Info, Activity, ChevronRight, RotateCcw, XCircle, History, Check, AlertCircle, BarChart3, ShieldCheck } from 'lucide-react';
+import React, { useState } from 'react';
+import { CheckCircle2, AlertTriangle, ArrowRight, Zap, Target, ShieldAlert, Info, Activity, ChevronRight, RotateCcw, XCircle, History, Check, AlertCircle, BarChart3, ShieldCheck, Loader2 } from 'lucide-react';
 import { Project } from '../types';
 
 interface ReviewResultProps {
@@ -9,8 +9,32 @@ interface ReviewResultProps {
 }
 
 export const ReviewResult = ({ project, onBack, onNext }: ReviewResultProps) => {
+  const [isRequesting, setIsRequesting] = useState(false);
+  const [requestStatus, setRequestStatus] = useState<string | null>(null);
+
+  const handleRequestInfo = async () => {
+    setIsRequesting(true);
+    setRequestStatus(null);
+    
+    // Simulate AI request for more info
+    setTimeout(() => {
+      setIsRequesting(false);
+      setRequestStatus("已向项目组发起信息补充请求。AI 将在收到回复后自动更新评审报告。");
+    }, 1500);
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-10 font-sans pb-20">
+      {requestStatus && (
+        <div className="fixed top-8 left-1/2 -translate-x-1/2 z-50 bg-emerald-900 text-white px-8 py-4 border border-emerald-500/50 shadow-2xl flex items-center gap-4 animate-in slide-in-from-top duration-300">
+          <CheckCircle2 size={20} className="text-emerald-400" />
+          <span className="text-xs font-mono font-bold uppercase tracking-widest">{requestStatus}</span>
+          <button onClick={() => setRequestStatus(null)} className="ml-4 hover:text-emerald-400 transition-colors">
+            <XCircle size={16} />
+          </button>
+        </div>
+      )}
+
       <div className="flex items-end justify-between border-b border-slate-200 pb-8">
         <div className="flex items-center gap-6">
           <button 
@@ -22,7 +46,7 @@ export const ReviewResult = ({ project, onBack, onNext }: ReviewResultProps) => 
           <div className="space-y-2">
             <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
               <Activity size={12} className="text-emerald-500" />
-              AI 智能评审引擎 / 活跃
+              AI 智能评审引擎 / 运行中
             </div>
             <h1 className="text-4xl font-bold text-slate-900 tracking-tight">项目评审报告</h1>
           </div>
@@ -47,7 +71,7 @@ export const ReviewResult = ({ project, onBack, onNext }: ReviewResultProps) => 
             <div className="relative z-10 space-y-6">
               <div className="flex items-center gap-3">
                 <div className="h-px w-8 bg-emerald-500"></div>
-                <h3 className="text-[10px] font-mono font-bold text-emerald-500 uppercase tracking-[0.4em]">执行摘要 / Executive Summary</h3>
+                <h3 className="text-[10px] font-mono font-bold text-emerald-500 uppercase tracking-[0.4em]">执行摘要</h3>
               </div>
               <p className="text-2xl font-medium leading-relaxed tracking-tight italic font-serif text-slate-100">
                 "当前项目整体具备投标基础。我司核心资质完全覆盖招标要求，且在同类智慧城市项目中具备显著的业绩优势。虽然在部分特定人员证书上存在缺口，但可通过内部调配或临时聘用解决。"
@@ -60,9 +84,9 @@ export const ReviewResult = ({ project, onBack, onNext }: ReviewResultProps) => 
               <div className="flex items-center justify-between border-b border-slate-100 pb-4">
                 <h3 className="text-[10px] font-mono font-bold text-slate-900 uppercase tracking-[0.3em] flex items-center gap-2">
                   <Target size={14} className="text-emerald-500" />
-                  核心优势 / Core Advantages
+                  核心优势
                 </h3>
-                <span className="text-[10px] font-mono font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5">MATCHED</span>
+                <span className="text-[10px] font-mono font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5">完全匹配</span>
               </div>
               <div className="space-y-4">
                 {[
@@ -82,9 +106,9 @@ export const ReviewResult = ({ project, onBack, onNext }: ReviewResultProps) => 
               <div className="flex items-center justify-between border-b border-slate-100 pb-4">
                 <h3 className="text-[10px] font-mono font-bold text-slate-900 uppercase tracking-[0.3em] flex items-center gap-2">
                   <ShieldAlert size={14} className="text-rose-500" />
-                  风险预警 / Risk Assessment
+                  风险预警
                 </h3>
-                <span className="text-[10px] font-mono font-bold text-rose-600 bg-rose-50 px-2 py-0.5">CRITICAL</span>
+                <span className="text-[10px] font-mono font-bold text-rose-600 bg-rose-50 px-2 py-0.5">关键风险</span>
               </div>
               <div className="space-y-4">
                 {[
@@ -105,10 +129,10 @@ export const ReviewResult = ({ project, onBack, onNext }: ReviewResultProps) => 
         <div className="col-span-4 space-y-8">
           <section className="bg-white border border-slate-200 p-10 space-y-8 shadow-xl sticky top-8">
             <div className="space-y-2">
-              <h3 className="text-[10px] font-mono font-bold text-slate-900 uppercase tracking-[0.3em]">决策建议 / Decision Matrix</h3>
+              <h3 className="text-[10px] font-mono font-bold text-slate-900 uppercase tracking-[0.3em]">决策建议矩阵</h3>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                <p className="text-[10px] text-emerald-600 font-mono font-bold uppercase tracking-widest">推荐动作: 继续推进 / PROCEED</p>
+                <p className="text-[10px] text-emerald-600 font-mono font-bold uppercase tracking-widest">推荐动作: 继续推进</p>
               </div>
             </div>
 
@@ -121,10 +145,12 @@ export const ReviewResult = ({ project, onBack, onNext }: ReviewResultProps) => 
                 开始编写标书
               </button>
               <button 
-                className="w-full py-5 border border-slate-200 text-slate-600 text-[10px] font-mono font-bold uppercase tracking-[0.2em] hover:bg-slate-50 transition-all flex items-center justify-center gap-3 active:scale-95"
+                onClick={handleRequestInfo}
+                disabled={isRequesting}
+                className={`w-full py-5 border border-slate-200 text-slate-600 text-[10px] font-mono font-bold uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 active:scale-95 ${isRequesting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-50'}`}
               >
-                <Info size={14} />
-                请求更多信息
+                {isRequesting ? <Loader2 size={14} className="animate-spin" /> : <Info size={14} />}
+                {isRequesting ? '正在发送请求...' : '请求更多信息'}
               </button>
               <button 
                 onClick={onBack}
@@ -136,7 +162,7 @@ export const ReviewResult = ({ project, onBack, onNext }: ReviewResultProps) => 
             </div>
 
             <div className="pt-8 border-t border-slate-100 space-y-6">
-              <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-[0.2em]">后续建议步骤 / Next Steps</div>
+              <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-[0.2em]">后续建议步骤</div>
               <ul className="space-y-4">
                 {[
                   '立即从华东分公司调配1名高级项目经理。',

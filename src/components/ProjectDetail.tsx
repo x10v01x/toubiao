@@ -30,19 +30,19 @@ export const ProjectDetail = ({ project, onBack, onNext }: ProjectDetailProps) =
       <div className="flex items-center gap-4 text-[10px] font-mono font-bold text-slate-400 uppercase tracking-[0.3em]">
         <button onClick={onBack} className="hover:text-slate-900 transition-colors flex items-center gap-2">
           <ArrowLeft size={12} />
-          返回列表 / BACK
+          返回列表
         </button>
         <ChevronRight size={12} />
-        <span className="text-slate-900">项目详情 / PROJECT DETAILS</span>
+        <span className="text-slate-900">项目详情</span>
       </div>
 
       <div className="space-y-12">
         <div className="space-y-6">
           <div className="flex items-center gap-4">
             <Badge status={project.status} />
-            <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-[0.2em]">
-              编号 / REF: {project.id.slice(0, 12)}
-            </span>
+              <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-[0.2em]">
+                项目编号: {project.id.slice(0, 12)}
+              </span>
           </div>
           <h1 className="text-6xl md:text-7xl font-bold text-slate-900 tracking-tight leading-[0.88] max-w-5xl">
             {project.title}
@@ -51,19 +51,19 @@ export const ProjectDetail = ({ project, onBack, onNext }: ProjectDetailProps) =
 
         <div className="grid grid-cols-4 gap-12 border-y border-slate-200 py-12">
           <div className="space-y-2">
-            <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-[0.2em]">预算金额 / BUDGET (CNY)</div>
+            <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-[0.2em]">预算金额 (CNY)</div>
             <div className="text-3xl font-bold text-slate-900 font-mono tracking-tighter">{project.budget}</div>
           </div>
           <div className="space-y-2">
-            <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-[0.2em]">截止日期 / DEADLINE (UTC+8)</div>
+            <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-[0.2em]">截止日期 (UTC+8)</div>
             <div className="text-3xl font-bold text-slate-900 font-mono tracking-tighter">{project.deadline}</div>
           </div>
           <div className="space-y-2">
-            <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-[0.2em]">招标单位 / PROCURING AGENCY</div>
+            <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-[0.2em]">招标单位</div>
             <div className="text-sm font-bold text-slate-900 leading-tight uppercase tracking-tight">{project.agency}</div>
           </div>
           <div className="space-y-2">
-            <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-[0.2em]">项目地点 / LOCATION</div>
+            <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-[0.2em]">项目地点</div>
             <div className="text-sm font-bold text-slate-900 leading-tight uppercase tracking-tight">{project.location}</div>
           </div>
         </div>
@@ -75,7 +75,7 @@ export const ProjectDetail = ({ project, onBack, onNext }: ProjectDetailProps) =
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <h3 className="text-[10px] font-mono font-bold text-slate-900 uppercase tracking-[0.3em] flex items-center gap-2">
                 <Info size={14} className="text-blue-500" />
-                公告正文内容 / ANNOUNCEMENT CONTENT
+                公告正文内容
               </h3>
               <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest">数据来源：中国政府采购网</div>
             </div>
@@ -107,7 +107,7 @@ export const ProjectDetail = ({ project, onBack, onNext }: ProjectDetailProps) =
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <h3 className="text-[10px] font-mono font-bold text-slate-900 uppercase tracking-[0.3em] flex items-center gap-2">
                 <FileText size={14} className="text-slate-400" />
-                附件清单 / DOCUMENTATION
+                附件清单
               </h3>
               <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest">总大小：49.5 MB</div>
             </div>
@@ -143,7 +143,7 @@ export const ProjectDetail = ({ project, onBack, onNext }: ProjectDetailProps) =
         <div className="col-span-4">
           <div className="bg-slate-900 p-10 text-white space-y-10 sticky top-24 overflow-hidden shadow-2xl">
             <div className="space-y-4 relative z-10">
-              <div className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-[0.3em]">AI 智能分析引擎 / AI ENGINE</div>
+              <div className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-[0.3em]">AI 智能分析引擎</div>
               <h4 className="text-2xl font-bold tracking-tight leading-tight">准备好进行可行性评审了吗？</h4>
               <p className="text-xs text-slate-400 leading-relaxed font-serif italic">
                 我们的 AI 将结合企业知识库对公告及附件进行深度解析，为您提供投标可行性评分。
@@ -170,7 +170,7 @@ export const ProjectDetail = ({ project, onBack, onNext }: ProjectDetailProps) =
             <div className="pt-8 border-t border-slate-800 relative z-10">
               <div className="flex items-center gap-3 text-[10px] font-mono font-bold text-emerald-500 uppercase tracking-[0.2em]">
                 <ShieldCheck size={14} />
-                数据完整性已核验 / VERIFIED
+                数据完整性已核验
               </div>
             </div>
 

@@ -81,7 +81,7 @@ export const Dashboard = () => {
                 <BarChart3 size={14} className="text-slate-400" />
                 投标趋势分析
               </h3>
-              <p className="text-[10px] text-slate-400 font-mono uppercase tracking-widest">Monthly Performance Trend</p>
+              <p className="text-[10px] text-slate-400 font-mono uppercase tracking-widest">月度投标表现趋势</p>
             </div>
             <div className="flex gap-6">
               <div className="flex items-center gap-2">
@@ -134,7 +134,7 @@ export const Dashboard = () => {
               <PieChartIcon size={14} className="text-slate-400" />
               胜率分布
             </h3>
-            <p className="text-[10px] text-slate-400 font-mono uppercase tracking-widest">Win Distribution Matrix</p>
+            <p className="text-[10px] text-slate-400 font-mono uppercase tracking-widest">胜率分布矩阵</p>
           </div>
           <div className="flex-1 relative flex items-center justify-center">
             <ResponsiveContainer width="100%" height={240}>
@@ -179,7 +179,7 @@ export const Dashboard = () => {
             <h3 className="text-[10px] font-mono font-bold text-slate-900 uppercase tracking-[0.3em]">
               实时任务队列
             </h3>
-            <p className="text-[10px] text-slate-400 font-mono uppercase tracking-widest">Real-time Mission Queue</p>
+            <p className="text-[10px] text-slate-400 font-mono uppercase tracking-widest">实时任务执行队列</p>
           </div>
           <div className="flex items-center gap-3 text-[10px] font-mono font-bold text-emerald-600 uppercase tracking-[0.2em]">
             <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>

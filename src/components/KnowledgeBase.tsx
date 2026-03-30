@@ -1,11 +1,17 @@
-import React from 'react';
-import { Award, Users, FileSearch, BookOpen, ChevronRight, ShieldCheck, Database, History, Search, ArrowUpRight, Activity, Zap } from 'lucide-react';
+import React, { useState } from 'react';
+import { Award, Users, FileSearch, BookOpen, ChevronRight, ShieldCheck, Database, History, Search, ArrowUpRight, Activity, Zap, X, Send, Loader2 } from 'lucide-react';
+import { GoogleGenAI } from "@google/genai";
 
 interface KnowledgeBaseProps {
   onViewChange: (view: string) => void;
 }
 
 export const KnowledgeBase = ({ onViewChange }: KnowledgeBaseProps) => {
+  const [showQA, setShowQA] = useState(false);
+  const [question, setQuestion] = useState('');
+  const [answer, setAnswer] = useState<string | null>(null);
+  const [isAsking, setIsAsking] = useState(false);
+
   const stats = [
     { label: '企业资质', count: 24, icon: Award, color: 'text-emerald-600', bg: 'bg-emerald-50', view: 'qualifications', trend: '+2' },
     { label: '人员人才', count: 156, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50', view: 'personnel', trend: '+12' },
@@ -13,8 +19,104 @@ export const KnowledgeBase = ({ onViewChange }: KnowledgeBaseProps) => {
     { label: '标准规范', count: 89, icon: BookOpen, color: 'text-purple-600', bg: 'bg-purple-50', view: 'standards', trend: '+1' },
   ];
 
+  const handleAsk = async () => {
+    if (!question.trim() || isAsking) return;
+    setIsAsking(true);
+    setAnswer(null);
+
+    try {
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: `你是一个专业的企业知识库助手。用户正在询问关于公司资产（资质、人员、业绩、标准）的问题。
+        公司概况：
+        - 资质：24项（包括电子与智能化一级等）
+        - 人员：156名专业人员
+        - 业绩：42项大型项目案例
+        - 标准：89项行业规范
+        
+        用户问题：${question}
+        
+        请根据以上信息提供专业、准确的回答。如果信息不足，请委婉说明并建议联系相关部门。
+        使用中文回答，保持简洁专业。`,
+      });
+
+      setAnswer(response.text || "未能生成回答。");
+    } catch (error) {
+      console.error("QA Error:", error);
+      setAnswer("AI 响应失败，请重试。");
+    } finally {
+      setIsAsking(false);
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-12 pb-20">
+      {/* AI QA Modal */}
+      {showQA && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+          <div className="bg-[#151619] w-full max-w-2xl border border-slate-800 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300 flex flex-col h-[600px]">
+            <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900">
+              <div className="flex items-center gap-3">
+                <Zap className="text-emerald-500" size={20} />
+                <h3 className="text-sm font-mono font-bold text-white uppercase tracking-[0.3em]">智能知识库助手</h3>
+              </div>
+              <button onClick={() => { setShowQA(false); setAnswer(null); setQuestion(''); }} className="text-slate-500 hover:text-white transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar bg-[#0a0b0d]">
+              {!answer && !isAsking && (
+                <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-40">
+                  <Database size={48} className="text-slate-700" />
+                  <p className="text-xs font-mono font-bold text-slate-500 uppercase tracking-widest">请输入您想了解的企业资产问题</p>
+                </div>
+              )}
+              
+              {isAsking && (
+                <div className="flex items-center gap-3 text-emerald-500 font-mono text-[10px] font-bold uppercase tracking-widest animate-pulse">
+                  <Loader2 size={14} className="animate-spin" />
+                  正在检索企业资产库...
+                </div>
+              )}
+              
+              {answer && (
+                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  <div className="flex items-center gap-2">
+                    <div className="h-px w-8 bg-emerald-500/30"></div>
+                    <span className="text-[8px] font-mono font-bold text-slate-500 uppercase tracking-widest">AI 响应</span>
+                  </div>
+                  <div className="p-6 bg-slate-900/50 border-l-2 border-emerald-500 text-slate-300 text-xs leading-relaxed font-mono whitespace-pre-wrap">
+                    {answer}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="p-6 bg-slate-900 border-t border-slate-800">
+              <div className="relative">
+                <input 
+                  type="text" 
+                  placeholder="询问关于资质、人员或业绩的问题..." 
+                  className="w-full bg-[#0a0b0d] border border-slate-800 text-white font-mono text-xs px-6 py-4 focus:outline-none focus:border-emerald-500/50 transition-all placeholder:text-slate-700"
+                  value={question}
+                  onChange={(e) => setQuestion(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAsk()}
+                  disabled={isAsking}
+                />
+                <button 
+                  onClick={handleAsk}
+                  disabled={isAsking || !question.trim()}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-emerald-500 transition-colors disabled:opacity-30"
+                >
+                  {isAsking ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="flex items-end justify-between border-b border-slate-200 pb-8">
         <div>
           <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-[0.3em] mb-2 flex items-center gap-2">
@@ -135,7 +237,10 @@ export const KnowledgeBase = ({ onViewChange }: KnowledgeBaseProps) => {
             <p className="text-slate-400 text-sm leading-relaxed italic font-serif">
               "系统已自动解析并索引了 250+ 份历史标书与合同。您可以直接通过 AI 助手询问任何关于公司过往业绩或资质的问题。"
             </p>
-            <button className="mt-4 px-8 py-3 bg-white text-slate-900 text-xs font-bold uppercase tracking-widest hover:bg-slate-100 transition-all shadow-xl">
+            <button 
+              onClick={() => setShowQA(true)}
+              className="mt-4 px-8 py-3 bg-white text-slate-900 text-xs font-bold uppercase tracking-widest hover:bg-slate-100 transition-all shadow-xl active:scale-95"
+            >
               开始 AI 问答
             </button>
           </div>

@@ -1,21 +1,35 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageSquare, X, Send, Sparkles, User, Bot, ChevronDown, Loader2, Zap, Activity, ShieldCheck, Terminal } from 'lucide-react';
+import { MessageSquare, X, Send, Sparkles, User, Bot, ChevronDown, Loader2, Zap, Activity, ShieldCheck, Terminal, Trash2, Copy, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { GoogleGenAI } from "@google/genai";
 import { Project } from '../types';
 
 interface AIAssistantProps {
   selectedProject: Project | null;
+  currentView: string;
 }
 
-export const AIAssistant = ({ selectedProject }: AIAssistantProps) => {
+export const AIAssistant = ({ selectedProject, currentView }: AIAssistantProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     { id: '1', role: 'bot', text: '系统已就绪。投标 AI 助手已上线。我可以为您分析招标文件、匹配公司资质或协助起草技术标段。今天有什么可以帮您的？' },
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const handleCopy = (text: string, id: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const clearChat = () => {
+    setMessages([
+      { id: '1', role: 'bot', text: '系统已就绪。投标 AI 助手已上线。我可以为您分析招标文件、匹配公司资质或协助起草技术标段。今天有什么可以帮您的？' },
+    ]);
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -41,9 +55,12 @@ export const AIAssistant = ({ selectedProject }: AIAssistantProps) => {
       const context = selectedProject 
         ? `当前项目: "${selectedProject.title}", 招标单位: "${selectedProject.agency}", 预算: "${selectedProject.budget}", 地点: "${selectedProject.location}".`
         : "未选择特定项目。";
+      
+      const viewContext = `当前用户正在查看的页面: ${currentView}。`;
 
       const prompt = `你是一个专业的投标助手 AI。
       ${context}
+      ${viewContext}
       
       用户查询: ${messageText}
       
@@ -103,17 +120,24 @@ export const AIAssistant = ({ selectedProject }: AIAssistantProps) => {
                   <Zap size={20} className="text-emerald-400" />
                 </div>
                 <div>
-                  <div className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-[0.3em]">神经核心 / NEURAL CORE v4.0</div>
-                  <div className="text-sm font-bold text-white tracking-tight uppercase">投标 AI 助手 / BIDDING ASSISTANT</div>
+                  <div className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-[0.3em]">神经核心 v4.0</div>
+                  <div className="text-sm font-bold text-white tracking-tight uppercase">投标 AI 助手</div>
                 </div>
               </div>
               <div className="flex items-center gap-3 relative z-10">
+                <button 
+                  onClick={clearChat} 
+                  className="p-2 hover:bg-slate-800 text-slate-500 hover:text-rose-400 transition-all" 
+                  title="清空对话"
+                >
+                  <Trash2 size={16} />
+                </button>
                 <div className="flex flex-col items-end">
                   <div className="text-[8px] font-mono font-bold text-emerald-500 uppercase tracking-widest flex items-center gap-1">
                     <Activity size={8} />
-                    实时 / LIVE
+                    实时
                   </div>
-                  <div className="text-[8px] font-mono font-bold text-slate-600 uppercase tracking-widest">加密 / ENCRYPTED</div>
+                  <div className="text-[8px] font-mono font-bold text-slate-600 uppercase tracking-widest">加密</div>
                 </div>
                 <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-slate-800 text-slate-500 hover:text-white transition-all">
                   <X size={18} />
@@ -128,7 +152,7 @@ export const AIAssistant = ({ selectedProject }: AIAssistantProps) => {
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1.5">
                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
-                  <span className="text-[9px] font-mono font-bold text-slate-400 uppercase tracking-widest">系统就绪 / SYSTEM READY</span>
+                  <span className="text-[9px] font-mono font-bold text-slate-400 uppercase tracking-widest">系统就绪</span>
                 </div>
                 <div className="text-[9px] font-mono font-bold text-slate-600 uppercase tracking-widest">
                   延迟: 42ms
@@ -146,16 +170,22 @@ export const AIAssistant = ({ selectedProject }: AIAssistantProps) => {
                   <div className={`flex flex-col gap-2 max-w-[90%] ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                     <div className="flex items-center gap-2 px-1">
                       <span className="text-[8px] font-mono font-bold text-slate-500 uppercase tracking-widest">
-                        {msg.role === 'user' ? '用户输入 / USER_INPUT' : 'AI 响应 / AI_RESPONSE'}
+                        {msg.role === 'user' ? '用户输入' : 'AI 响应'}
                       </span>
                       <div className="h-px w-8 bg-slate-800"></div>
                     </div>
-                    <div className={`p-4 text-xs leading-relaxed font-mono ${
+                    <div className={`p-4 text-xs leading-relaxed font-mono relative group/msg ${
                       msg.role === 'user' 
                         ? 'bg-slate-800 text-white border-r-2 border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.1)]' 
                         : 'bg-slate-900/50 text-slate-300 border-l-2 border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.1)]'
                     }`}>
                       {msg.text}
+                      <button 
+                        onClick={() => handleCopy(msg.text, msg.id)}
+                        className="absolute top-2 right-2 p-1 bg-slate-900/80 text-slate-500 hover:text-white opacity-0 group-hover/msg:opacity-100 transition-all"
+                      >
+                        {copiedId === msg.id ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -164,7 +194,7 @@ export const AIAssistant = ({ selectedProject }: AIAssistantProps) => {
                 <div className="flex justify-start">
                   <div className="flex flex-col gap-2 items-start">
                     <div className="flex items-center gap-2 px-1">
-                      <span className="text-[8px] font-mono font-bold text-slate-500 uppercase tracking-widest">处理中 / PROCESSING</span>
+                      <span className="text-[8px] font-mono font-bold text-slate-500 uppercase tracking-widest">处理中</span>
                       <div className="h-px w-8 bg-slate-800"></div>
                     </div>
                     <div className="flex gap-3 items-center bg-slate-900/50 p-4 border-l-2 border-emerald-500/50">
@@ -185,7 +215,7 @@ export const AIAssistant = ({ selectedProject }: AIAssistantProps) => {
                 </div>
                 <input
                   type="text"
-                  placeholder="输入指令 / ENTER COMMAND..."
+                  placeholder="输入指令..."
                   className="w-full bg-[#0a0b0d] border border-slate-800 text-white font-mono text-xs px-10 py-4 focus:outline-none focus:border-emerald-500/50 transition-all placeholder:text-slate-700"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
@@ -202,7 +232,13 @@ export const AIAssistant = ({ selectedProject }: AIAssistantProps) => {
               </div>
               
               <div className="mt-4 flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-                {['分析评分标准', '检查资质匹配', '生成施工方案'].map((tag) => (
+                {(currentView === 'list' ? ['分析新项目', '查找历史业绩', '导入招标文件'] :
+                  currentView === 'detail' ? ['提取关键要求', '分析评分权重', '检查截止日期'] :
+                  currentView === 'review' ? ['如何优化优势', '如何规避风险', '生成评审报告'] :
+                  currentView === 'match' ? ['查找缺失资质', '推荐替代人员', '导出匹配矩阵'] :
+                  currentView === 'draft' ? ['扩写当前章节', '润色专业词汇', '检查逻辑一致性'] :
+                  currentView === 'package' ? ['检查文档完整性', '合规性自检', '生成目录'] :
+                  ['分析评分标准', '检查资质匹配', '生成施工方案']).map((tag) => (
                   <button 
                     key={tag} 
                     onClick={() => handleSend(tag)}
@@ -217,7 +253,7 @@ export const AIAssistant = ({ selectedProject }: AIAssistantProps) => {
               <div className="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between">
                 <div className="flex items-center gap-2 text-[8px] font-mono font-bold text-slate-600 uppercase tracking-widest">
                   <ShieldCheck size={10} />
-                  安全会话 / SECURE SESSION
+                  安全会话
                 </div>
                 <div className="text-[8px] font-mono font-bold text-slate-600 uppercase tracking-widest">
                   v4.0.2-STABLE
