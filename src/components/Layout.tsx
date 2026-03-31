@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { LayoutGrid, ClipboardCheck, FileText, Users, FileSearch, Bell, User, Menu, Award, Database, Search, X, ChevronRight, LogOut } from 'lucide-react';
-import { useFirebase } from './FirebaseProvider';
+import { LayoutGrid, ClipboardCheck, FileText, Users, FileSearch, Bell, User, Menu, Award, Database, Search, X, ChevronRight } from 'lucide-react';
 
 interface SidebarItemProps {
   icon: any;
@@ -26,7 +25,6 @@ interface LayoutProps {
 }
 
 export const Layout = ({ children, currentView, onViewChange }: LayoutProps) => {
-  const { user, logout } = useFirebase();
   const getNodeName = () => {
     switch (currentView) {
       case 'dashboard': return '系统概览';
@@ -99,25 +97,14 @@ export const Layout = ({ children, currentView, onViewChange }: LayoutProps) => 
         </nav>
 
         <div className="p-4 border-t border-slate-100">
-          <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 transition-colors group relative">
-            <div className="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center text-slate-500 overflow-hidden">
-              {user?.photoURL ? (
-                <img src={user.photoURL} alt={user.displayName || ''} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-              ) : (
-                <User size={18} />
-              )}
+          <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer">
+            <div className="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center text-slate-500">
+              <User size={18} />
             </div>
             <div className="flex-1 overflow-hidden">
-              <div className="text-xs font-bold text-slate-900 truncate">{user?.displayName || '用户'}</div>
-              <div className="text-[10px] text-slate-400 truncate">{user?.email}</div>
+              <div className="text-xs font-bold text-slate-900 truncate">投标部 - 张经理</div>
+              <div className="text-[10px] text-slate-400 truncate">joseluckeyhkd@gmail.com</div>
             </div>
-            <button 
-              onClick={logout}
-              className="p-1.5 text-slate-400 hover:text-rose-500 transition-colors"
-              title="退出登录"
-            >
-              <LogOut size={14} />
-            </button>
           </div>
         </div>
       </aside>

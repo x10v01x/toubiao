@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Check, Download, Zap, ShieldCheck, CheckCircle2, ArrowRight, Printer, LogIn, Loader2 } from 'lucide-react';
+import { Check, Download, Zap, ShieldCheck, CheckCircle2, ArrowRight, Printer } from 'lucide-react';
 import { Project } from './types';
 
 // Import components
@@ -25,54 +25,10 @@ import { AIAssistant } from './components/AIAssistant';
 import { KnowledgeBase } from './components/KnowledgeBase';
 import { StandardsLibrary } from './components/StandardsLibrary';
 import { BidAnalysis } from './components/BidAnalysis';
-import { FirebaseProvider, useFirebase, ErrorBoundary } from './components/FirebaseProvider';
 
-function AppContent() {
-  const { user, loading, login } = useFirebase();
+export default function App() {
   const [currentView, setCurrentView] = useState('list');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 space-y-6">
-        <Loader2 size={40} className="text-slate-900 animate-spin" />
-        <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-[0.4em] animate-pulse">系统初始化中 / INITIALIZING...</div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-8">
-        <div className="max-w-md w-full bg-white border border-slate-200 p-12 shadow-2xl space-y-10 relative overflow-hidden group">
-          <div className="absolute top-0 left-0 w-full h-1 bg-slate-900"></div>
-          <div className="space-y-4">
-            <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-[0.4em]">身份验证 / AUTHENTICATION</div>
-            <h1 className="text-4xl font-bold text-slate-900 tracking-tight">AI 智能投标管理系统</h1>
-            <p className="text-sm text-slate-500 italic font-serif leading-relaxed">
-              欢迎使用下一代投标效能引擎。请登录以访问您的项目、资质库及 AI 辅助功能。
-            </p>
-          </div>
-          
-          <button 
-            onClick={login}
-            className="w-full py-4 bg-slate-900 text-white text-[10px] font-mono font-bold uppercase tracking-[0.2em] hover:bg-slate-800 transition-all flex items-center justify-center gap-3 shadow-xl group-hover:translate-y-[-2px]"
-          >
-            <LogIn size={18} />
-            使用 Google 账号登录
-          </button>
-          
-          <div className="pt-8 border-t border-slate-100 flex items-center justify-between text-[8px] font-mono font-bold text-slate-400 uppercase tracking-widest">
-            <div className="flex items-center gap-2">
-              <ShieldCheck size={12} className="text-emerald-500" />
-              企业级安全保障
-            </div>
-            <div>v4.0.2-STABLE</div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   const handleProjectSelect = (project: Project) => {
     setSelectedProject(project);
@@ -235,15 +191,5 @@ function AppContent() {
       </AnimatePresence>
       <AIAssistant selectedProject={selectedProject} currentView={currentView} />
     </Layout>
-  );
-}
-
-export default function App() {
-  return (
-    <ErrorBoundary>
-      <FirebaseProvider>
-        <AppContent />
-      </FirebaseProvider>
-    </ErrorBoundary>
   );
 }

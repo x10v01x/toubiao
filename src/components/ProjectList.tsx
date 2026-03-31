@@ -1,9 +1,6 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { Search, Filter, MapPin, Clock, ChevronRight, Globe, Tag, ShieldCheck, Building2, ArrowUpRight, Activity, Database, RefreshCw, X, Plus, Loader2 } from 'lucide-react';
-import { Project, ProjectStatus } from '../types';
-import { db } from '../firebase';
-import { collection, query, where, onSnapshot, addDoc, serverTimestamp, orderBy } from 'firebase/firestore';
-import { useFirebase, OperationType, handleFirestoreError } from './FirebaseProvider';
+import React, { useState, useMemo } from 'react';
+import { Search, Filter, MapPin, Clock, ChevronRight, Globe, Tag, ShieldCheck, Building2, ArrowUpRight, Activity, Database, RefreshCw, X, Plus } from 'lucide-react';
+import { Project, MOCK_PROJECTS, ProjectStatus } from '../types';
 
 const Badge = ({ status }: { status: ProjectStatus }) => {
   const styles: Record<ProjectStatus, string> = {
@@ -26,9 +23,6 @@ interface ProjectListProps {
 }
 
 export const ProjectList = ({ onSelect }: ProjectListProps) => {
-  const { user, isAdmin } = useFirebase();
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState<ProjectStatus | '全部'>('全部');
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -36,32 +30,10 @@ export const ProjectList = ({ onSelect }: ProjectListProps) => {
   const [newProjectUrl, setNewProjectUrl] = useState('');
   const [isImporting, setIsImporting] = useState(false);
   const [importMode, setImportMode] = useState<'ai' | 'manual'>('ai');
-  const [manualProject, setManualProject] = useState({ title: '', agency: '', budget: '', location: '' });
-
-  useEffect(() => {
-    if (!user) return;
-
-    const path = 'projects';
-    const q = isAdmin 
-      ? query(collection(db, path), orderBy('createdAt', 'desc'))
-      : query(collection(db, path), where('uid', '==', user.uid), orderBy('createdAt', 'desc'));
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const projectsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Project[];
-      setProjects(projectsData);
-      setLoading(false);
-    }, (error) => {
-      handleFirestoreError(error, OperationType.LIST, path);
-    });
-
-    return () => unsubscribe();
-  }, [user, isAdmin]);
+  const [manualProject, setManualProject] = useState({ title: '', agency: '', budget: '' });
 
   const filteredProjects = useMemo(() => {
-    return projects.filter(project => {
+    return MOCK_PROJECTS.filter(project => {
       const matchesSearch = 
         project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         project.agency.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -71,45 +43,27 @@ export const ProjectList = ({ onSelect }: ProjectListProps) => {
       
       return matchesSearch && matchesFilter;
     });
-  }, [projects, searchTerm, activeFilter]);
+  }, [searchTerm, activeFilter]);
 
   const handleRefresh = () => {
     setIsRefreshing(true);
     setTimeout(() => setIsRefreshing(false), 1500);
   };
 
-  const handleImport = async () => {
-    if (!user) return;
+  const handleImport = () => {
     if (importMode === 'ai' && !newProjectUrl) return;
     if (importMode === 'manual' && !manualProject.title) return;
     
     setIsImporting(true);
-    const path = 'projects';
-    try {
-      const newProjectData = {
-        title: importMode === 'ai' ? 'AI 提取项目: ' + newProjectUrl.slice(0, 20) + '...' : manualProject.title,
-        agency: importMode === 'ai' ? '待解析' : manualProject.agency,
-        location: importMode === 'ai' ? '待解析' : manualProject.location || '未知',
-        budget: importMode === 'ai' ? '待解析' : manualProject.budget || '面议',
-        deadline: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        status: '待评审' as ProjectStatus,
-        publishDate: new Date().toISOString().split('T')[0],
-        source: importMode === 'ai' ? '外部链接' : '手动录入',
-        hasReview: false,
-        hasDraft: false,
-        uid: user.uid,
-        createdAt: serverTimestamp()
-      };
-
-      await addDoc(collection(db, path), newProjectData);
-      
+    // Simulate AI extraction or manual save
+    setTimeout(() => {
       setIsImporting(false);
       setShowNewProjectModal(false);
       setNewProjectUrl('');
-      setManualProject({ title: '', agency: '', budget: '', location: '' });
-    } catch (error) {
-      handleFirestoreError(error, OperationType.CREATE, path);
-    }
+      setManualProject({ title: '', agency: '', budget: '' });
+      // In a real app, we would add the new project to the list
+      alert(importMode === 'ai' ? '项目导入成功！AI 已自动提取招标公告关键信息。' : '项目手动创建成功！');
+    }, 2500);
   };
 
   return (
@@ -193,16 +147,6 @@ export const ProjectList = ({ onSelect }: ProjectListProps) => {
                         onChange={(e) => setManualProject({...manualProject, budget: e.target.value})}
                       />
                     </div>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest">项目地点</label>
-                    <input 
-                      type="text"
-                      placeholder="例如: 广东省某市"
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 text-sm font-bold focus:outline-none focus:border-slate-900 focus:bg-white transition-all"
-                      value={manualProject.location}
-                      onChange={(e) => setManualProject({...manualProject, location: e.target.value})}
-                    />
                   </div>
                 </div>
               )}
@@ -342,12 +286,7 @@ export const ProjectList = ({ onSelect }: ProjectListProps) => {
           <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-[0.2em] text-right">状态</div>
         </div>
         <div className="divide-y divide-slate-100">
-          {loading ? (
-            <div className="px-6 py-20 text-center space-y-4">
-              <Loader2 size={32} className="text-slate-300 animate-spin mx-auto" />
-              <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest">正在加载项目数据...</div>
-            </div>
-          ) : filteredProjects.length > 0 ? (
+          {filteredProjects.length > 0 ? (
             filteredProjects.map((project) => (
               <div 
                 key={project.id} 
