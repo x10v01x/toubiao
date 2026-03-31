@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronRight, ShieldCheck, AlertTriangle, CheckCircle2, Info, Activity, Target, Zap, ArrowUpRight, Search, Filter, Loader2, X } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
+import ReactMarkdown from 'react-markdown';
 
 interface KnowledgeMatchProps {
   onBack: () => void;
@@ -96,8 +97,8 @@ export const KnowledgeMatch = ({ onBack, onNext }: KnowledgeMatchProps) => {
             </div>
             <h3 className="text-sm font-bold text-blue-900 uppercase tracking-widest">AI 专家改进建议</h3>
           </div>
-          <div className="text-sm text-blue-800 leading-relaxed font-serif italic whitespace-pre-wrap">
-            {gapAnalysis}
+          <div className="text-sm text-blue-800 leading-relaxed font-serif italic prose prose-blue max-w-none">
+            <ReactMarkdown>{gapAnalysis}</ReactMarkdown>
           </div>
         </div>
       )}

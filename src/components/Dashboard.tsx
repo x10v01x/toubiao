@@ -177,6 +177,52 @@ export const Dashboard = () => {
         <div className="px-8 py-6 border-b border-slate-200 bg-slate-50/50 flex justify-between items-center">
           <div className="space-y-1">
             <h3 className="text-[10px] font-mono font-bold text-slate-900 uppercase tracking-[0.3em]">
+              竞争对手情报分析
+            </h3>
+            <p className="text-[10px] text-slate-400 font-mono uppercase tracking-widest">Competitor Intelligence Matrix</p>
+          </div>
+          <div className="flex items-center gap-3 text-[10px] font-mono font-bold text-blue-600 uppercase tracking-[0.2em]">
+            <Shield size={12} />
+            数据源: 历史招投标公开数据
+          </div>
+        </div>
+        <div className="p-8">
+          <div className="grid grid-cols-3 gap-8">
+            {[
+              { name: '竞争对手 A', winRate: 65, avgPrice: '92%', strength: '技术方案', color: 'bg-blue-500' },
+              { name: '竞争对手 B', winRate: 48, avgPrice: '85%', strength: '商务报价', color: 'bg-emerald-500' },
+              { name: '竞争对手 C', winRate: 32, avgPrice: '98%', strength: '资质业绩', color: 'bg-amber-500' },
+            ].map((comp, i) => (
+              <div key={i} className="p-6 bg-slate-50 border border-slate-100 space-y-6 group/comp hover:border-slate-900 transition-all">
+                <div className="flex justify-between items-start">
+                  <div className="text-sm font-bold text-slate-900">{comp.name}</div>
+                  <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest">核心优势: {comp.strength}</div>
+                </div>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-[10px] font-mono font-bold uppercase tracking-widest">
+                      <span className="text-slate-400">历史胜率</span>
+                      <span className="text-slate-900">{comp.winRate}%</span>
+                    </div>
+                    <div className="h-1 w-full bg-white">
+                      <div className={`h-full ${comp.color}`} style={{ width: `${comp.winRate}%` }} />
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center pt-2 border-t border-slate-200">
+                    <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest">平均报价比</span>
+                    <span className="text-xs font-mono font-bold text-slate-900">{comp.avgPrice}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white border border-slate-200 shadow-sm overflow-hidden group hover:border-slate-900 transition-colors">
+        <div className="px-8 py-6 border-b border-slate-200 bg-slate-50/50 flex justify-between items-center">
+          <div className="space-y-1">
+            <h3 className="text-[10px] font-mono font-bold text-slate-900 uppercase tracking-[0.3em]">
               实时任务队列
             </h3>
             <p className="text-[10px] text-slate-400 font-mono uppercase tracking-widest">实时任务执行队列</p>

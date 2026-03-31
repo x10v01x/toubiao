@@ -1,6 +1,9 @@
-import React, { useState, useMemo } from 'react';
-import { Search, Filter, MapPin, Clock, ChevronRight, Globe, Tag, ShieldCheck, Building2, ArrowUpRight, Activity, Database, RefreshCw, X, Plus } from 'lucide-react';
-import { Project, MOCK_PROJECTS, ProjectStatus } from '../types';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Search, Filter, MapPin, Clock, ChevronRight, Globe, Tag, ShieldCheck, Building2, ArrowUpRight, Activity, Database, RefreshCw, X, Plus, Loader2 } from 'lucide-react';
+import { Project, ProjectStatus } from '../types';
+import { db } from '../firebase';
+import { collection, query, where, onSnapshot, addDoc, serverTimestamp, orderBy } from 'firebase/firestore';
+import { useFirebase, OperationType, handleFirestoreError } from './FirebaseProvider';
 
 const Badge = ({ status }: { status: ProjectStatus }) => {
   const styles: Record<ProjectStatus, string> = {
@@ -23,15 +26,42 @@ interface ProjectListProps {
 }
 
 export const ProjectList = ({ onSelect }: ProjectListProps) => {
+  const { user, isAdmin } = useFirebase();
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState<ProjectStatus | '全部'>('全部');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showNewProjectModal, setShowNewProjectModal] = useState(false);
   const [newProjectUrl, setNewProjectUrl] = useState('');
   const [isImporting, setIsImporting] = useState(false);
+  const [importMode, setImportMode] = useState<'ai' | 'manual'>('ai');
+  const [manualProject, setManualProject] = useState({ title: '', agency: '', budget: '', location: '' });
+
+  useEffect(() => {
+    if (!user) return;
+
+    const path = 'projects';
+    const q = isAdmin 
+      ? query(collection(db, path), orderBy('createdAt', 'desc'))
+      : query(collection(db, path), where('uid', '==', user.uid), orderBy('createdAt', 'desc'));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const projectsData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Project[];
+      setProjects(projectsData);
+      setLoading(false);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, path);
+    });
+
+    return () => unsubscribe();
+  }, [user, isAdmin]);
 
   const filteredProjects = useMemo(() => {
-    return MOCK_PROJECTS.filter(project => {
+    return projects.filter(project => {
       const matchesSearch = 
         project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         project.agency.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -41,24 +71,45 @@ export const ProjectList = ({ onSelect }: ProjectListProps) => {
       
       return matchesSearch && matchesFilter;
     });
-  }, [searchTerm, activeFilter]);
+  }, [projects, searchTerm, activeFilter]);
 
   const handleRefresh = () => {
     setIsRefreshing(true);
     setTimeout(() => setIsRefreshing(false), 1500);
   };
 
-  const handleImport = () => {
-    if (!newProjectUrl) return;
+  const handleImport = async () => {
+    if (!user) return;
+    if (importMode === 'ai' && !newProjectUrl) return;
+    if (importMode === 'manual' && !manualProject.title) return;
+    
     setIsImporting(true);
-    // Simulate AI extraction
-    setTimeout(() => {
+    const path = 'projects';
+    try {
+      const newProjectData = {
+        title: importMode === 'ai' ? 'AI 提取项目: ' + newProjectUrl.slice(0, 20) + '...' : manualProject.title,
+        agency: importMode === 'ai' ? '待解析' : manualProject.agency,
+        location: importMode === 'ai' ? '待解析' : manualProject.location || '未知',
+        budget: importMode === 'ai' ? '待解析' : manualProject.budget || '面议',
+        deadline: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        status: '待评审' as ProjectStatus,
+        publishDate: new Date().toISOString().split('T')[0],
+        source: importMode === 'ai' ? '外部链接' : '手动录入',
+        hasReview: false,
+        hasDraft: false,
+        uid: user.uid,
+        createdAt: serverTimestamp()
+      };
+
+      await addDoc(collection(db, path), newProjectData);
+      
       setIsImporting(false);
       setShowNewProjectModal(false);
       setNewProjectUrl('');
-      // In a real app, we would add the new project to the list
-      alert('项目导入成功！AI 已自动提取招标公告关键信息。');
-    }, 2500);
+      setManualProject({ title: '', agency: '', budget: '', location: '' });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, path);
+    }
   };
 
   return (
@@ -69,36 +120,101 @@ export const ProjectList = ({ onSelect }: ProjectListProps) => {
           <div className="bg-white w-full max-w-xl border border-slate-200 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
             <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
               <div>
-                <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-[0.3em] mb-1">AI 智能导入</div>
+                <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-[0.3em] mb-1">
+                  {importMode === 'ai' ? 'AI 智能导入' : '手动创建项目'}
+                </div>
                 <h3 className="text-xl font-bold text-slate-900 tracking-tight">新增招标项目</h3>
               </div>
               <button onClick={() => setShowNewProjectModal(false)} className="text-slate-400 hover:text-slate-900 transition-colors">
                 <X size={20} />
               </button>
             </div>
-            <div className="p-8 space-y-8">
-              <div className="space-y-4">
-                <label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest">输入招标公告 URL 或 粘贴正文</label>
-                <div className="relative group">
-                  <Globe className="absolute left-4 top-4 text-slate-400 group-focus-within:text-slate-900 transition-colors" size={18} />
-                  <textarea 
-                    placeholder="https://www.ccgp.gov.cn/..." 
-                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 text-sm font-bold focus:outline-none focus:border-slate-900 focus:bg-white transition-all min-h-[120px] resize-none"
-                    value={newProjectUrl}
-                    onChange={(e) => setNewProjectUrl(e.target.value)}
-                  />
-                </div>
-                <p className="text-[10px] text-slate-400 italic leading-relaxed">
-                  * 支持中国政府采购网、各省市公共资源交易中心 URL。AI 将自动解析项目名称、预算、截止日期及资格要求。
-                </p>
-              </div>
+            
+            <div className="flex border-b border-slate-100">
+              <button 
+                onClick={() => setImportMode('ai')}
+                className={`flex-1 py-4 text-[10px] font-mono font-bold uppercase tracking-widest transition-all ${importMode === 'ai' ? 'bg-slate-900 text-white' : 'bg-white text-slate-400 hover:bg-slate-50'}`}
+              >
+                AI 智能解析
+              </button>
+              <button 
+                onClick={() => setImportMode('manual')}
+                className={`flex-1 py-4 text-[10px] font-mono font-bold uppercase tracking-widest transition-all ${importMode === 'manual' ? 'bg-slate-900 text-white' : 'bg-white text-slate-400 hover:bg-slate-50'}`}
+              >
+                手动录入
+              </button>
+            </div>
 
-              <div className="flex items-center gap-4 p-4 bg-blue-50 border border-blue-100">
-                <Activity size={16} className="text-blue-500" />
-                <div className="text-[10px] font-mono font-bold text-blue-600 uppercase leading-tight">
-                  AI 引擎已就绪，预计解析时间: 3-5 秒
+            <div className="p-8 space-y-8">
+              {importMode === 'ai' ? (
+                <div className="space-y-4">
+                  <label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest">输入招标公告 URL 或 粘贴正文</label>
+                  <div className="relative group">
+                    <Globe className="absolute left-4 top-4 text-slate-400 group-focus-within:text-slate-900 transition-colors" size={18} />
+                    <textarea 
+                      placeholder="https://www.ccgp.gov.cn/..." 
+                      className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 text-sm font-bold focus:outline-none focus:border-slate-900 focus:bg-white transition-all min-h-[120px] resize-none"
+                      value={newProjectUrl}
+                      onChange={(e) => setNewProjectUrl(e.target.value)}
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-400 italic leading-relaxed">
+                    * 支持中国政府采购网、各省市公共资源交易中心 URL。AI 将自动解析项目名称、预算、截止日期及资格要求。
+                  </p>
                 </div>
-              </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest">项目名称</label>
+                    <input 
+                      type="text"
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 text-sm font-bold focus:outline-none focus:border-slate-900 focus:bg-white transition-all"
+                      value={manualProject.title}
+                      onChange={(e) => setManualProject({...manualProject, title: e.target.value})}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest">招标单位</label>
+                      <input 
+                        type="text"
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 text-sm font-bold focus:outline-none focus:border-slate-900 focus:bg-white transition-all"
+                        value={manualProject.agency}
+                        onChange={(e) => setManualProject({...manualProject, agency: e.target.value})}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest">预算金额</label>
+                      <input 
+                        type="text"
+                        placeholder="例如: 4,500万"
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 text-sm font-bold focus:outline-none focus:border-slate-900 focus:bg-white transition-all"
+                        value={manualProject.budget}
+                        onChange={(e) => setManualProject({...manualProject, budget: e.target.value})}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest">项目地点</label>
+                    <input 
+                      type="text"
+                      placeholder="例如: 广东省某市"
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 text-sm font-bold focus:outline-none focus:border-slate-900 focus:bg-white transition-all"
+                      value={manualProject.location}
+                      onChange={(e) => setManualProject({...manualProject, location: e.target.value})}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {importMode === 'ai' && (
+                <div className="flex items-center gap-4 p-4 bg-blue-50 border border-blue-100">
+                  <Activity size={16} className="text-blue-500" />
+                  <div className="text-[10px] font-mono font-bold text-blue-600 uppercase leading-tight">
+                    AI 引擎已就绪，预计解析时间: 3-5 秒
+                  </div>
+                </div>
+              )}
 
               <div className="flex gap-4">
                 <button 
@@ -109,18 +225,18 @@ export const ProjectList = ({ onSelect }: ProjectListProps) => {
                 </button>
                 <button 
                   onClick={handleImport}
-                  disabled={!newProjectUrl || isImporting}
-                  className={`flex-1 py-4 bg-slate-900 text-white text-[10px] font-mono font-bold uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 shadow-xl ${(!newProjectUrl || isImporting) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-800 active:scale-95'}`}
+                  disabled={(importMode === 'ai' && !newProjectUrl) || (importMode === 'manual' && !manualProject.title) || isImporting}
+                  className={`flex-1 py-4 bg-slate-900 text-white text-[10px] font-mono font-bold uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 shadow-xl ${((importMode === 'ai' && !newProjectUrl) || (importMode === 'manual' && !manualProject.title) || isImporting) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-800 active:scale-95'}`}
                 >
                   {isImporting ? (
                     <>
                       <RefreshCw size={14} className="animate-spin" />
-                      正在解析中...
+                      {importMode === 'ai' ? '正在解析中...' : '正在保存...'}
                     </>
                   ) : (
                     <>
                       <ArrowUpRight size={14} />
-                      立即导入项目
+                      {importMode === 'ai' ? '立即导入项目' : '创建项目'}
                     </>
                   )}
                 </button>
@@ -226,7 +342,12 @@ export const ProjectList = ({ onSelect }: ProjectListProps) => {
           <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-[0.2em] text-right">状态</div>
         </div>
         <div className="divide-y divide-slate-100">
-          {filteredProjects.length > 0 ? (
+          {loading ? (
+            <div className="px-6 py-20 text-center space-y-4">
+              <Loader2 size={32} className="text-slate-300 animate-spin mx-auto" />
+              <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest">正在加载项目数据...</div>
+            </div>
+          ) : filteredProjects.length > 0 ? (
             filteredProjects.map((project) => (
               <div 
                 key={project.id} 

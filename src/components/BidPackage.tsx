@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { FileText, CheckCircle2, Clock, AlertCircle, Download, Eye, MoreVertical, Plus, ShieldCheck, Zap, Activity, ChevronRight, FileCheck, Package, Search, Filter, ArrowUpDown, Trash2, X, ArrowRight, Loader2 } from 'lucide-react';
+import { FileText, CheckCircle2, Clock, AlertCircle, Download, Eye, MoreVertical, Plus, ShieldCheck, Zap, Activity, ChevronRight, FileCheck, Package, Search, Filter, ArrowUpDown, Trash2, X, ArrowRight, Loader2, Check } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
+import ReactMarkdown from 'react-markdown';
 
 interface BidDocument {
   id: string;
@@ -142,8 +143,8 @@ export const BidPackage = ({ onNext }: BidPackageProps) => {
               </button>
             </div>
             <div className="p-8 space-y-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
-              <div className="prose prose-slate prose-sm max-w-none whitespace-pre-wrap font-serif italic text-slate-700 leading-relaxed">
-                {checkReport}
+              <div className="prose prose-slate prose-sm max-w-none font-serif italic text-slate-700 leading-relaxed">
+                <ReactMarkdown>{checkReport}</ReactMarkdown>
               </div>
             </div>
             <div className="p-8 bg-slate-50 border-t border-slate-100 flex justify-end">
@@ -337,6 +338,45 @@ export const BidPackage = ({ onNext }: BidPackageProps) => {
               <p className="text-[11px] text-slate-400 leading-relaxed italic font-serif">
                 技术标中“施工平面布置图”章节仍有 2 处 AI 标注需要人工确认，请在生成最终稿前完成核对。
               </p>
+            </div>
+          </section>
+
+          <section className="bg-white border border-slate-200 p-10 space-y-8 shadow-sm group hover:border-slate-900 transition-colors">
+            <div className="space-y-1">
+              <h3 className="text-[10px] font-mono font-bold text-slate-900 uppercase tracking-[0.3em]">
+                多级审批流
+              </h3>
+              <p className="text-[10px] text-slate-400 font-mono uppercase tracking-widest">Approval Workflow</p>
+            </div>
+            <div className="space-y-6">
+              {[
+                { role: '技术负责人', name: '张工', status: 'approved', time: '03-30 10:20', comment: '技术方案已核对，符合要求。' },
+                { role: '财务负责人', name: '李总', status: 'pending', time: '-', comment: '正在核算成本利润率...' },
+                { role: '法务负责人', name: '王律师', status: 'rejected', time: '03-30 15:45', comment: '第 12.4 条违约金条款需修改。' },
+              ].map((item, idx) => (
+                <div key={idx} className="flex gap-4 relative">
+                  {idx < 2 && <div className="absolute left-4 top-10 bottom-0 w-px bg-slate-100" />}
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 z-10 ${
+                    item.status === 'approved' ? 'bg-emerald-50 text-emerald-500 border border-emerald-100' : 
+                    item.status === 'rejected' ? 'bg-rose-50 text-rose-500 border border-rose-100' : 
+                    'bg-slate-50 text-slate-400 border border-slate-100'
+                  }`}>
+                    {item.status === 'approved' ? <Check size={14} /> : item.status === 'rejected' ? <X size={14} /> : <Clock size={14} />}
+                  </div>
+                  <div className="space-y-1 flex-1">
+                    <div className="flex justify-between items-center">
+                      <div className="text-[10px] font-mono font-bold text-slate-900 uppercase tracking-widest">{item.role}: {item.name}</div>
+                      <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest">{item.time}</div>
+                    </div>
+                    <div className="text-[11px] text-slate-500 italic font-serif leading-relaxed">{item.comment}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="pt-6 border-t border-slate-100">
+              <button className="w-full py-3 bg-slate-900 text-white text-[10px] font-mono font-bold uppercase tracking-[0.2em] hover:bg-slate-800 transition-all active:scale-95">
+                发起新一轮审批
+              </button>
             </div>
           </section>
 

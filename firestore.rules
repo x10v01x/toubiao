@@ -1,0 +1,136 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: projects
+    // Document ID: projectId
+    // Fields:
+    //   - id: string (required)
+    //   - title: string (required, < 200 chars)
+    //   - agency: string (required, < 100 chars)
+    //   - location: string (optional)
+    //   - budget: string (optional)
+    //   - deadline: string (optional)
+    //   - status: string (required, enum)
+    //   - publishDate: string (optional)
+    //   - source: string (optional)
+    //   - hasReview: bool (optional)
+    //   - hasDraft: bool (optional)
+    //   - uid: string (required, owner UID)
+    //
+    // Collection: qualifications, personnel, performances, standards
+    // [Similar structures with uid field for ownership]
+    //
+    // Collection: users
+    // Document ID: userId
+    // Fields:
+    //   - uid: string (required)
+    //   - email: string (required)
+    //   - displayName: string (optional)
+    //   - photoURL: string (optional)
+    //   - role: string (required, enum: ['admin', 'user'])
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.uid;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "joseluckeyhkd@gmail.com" && request.auth.token.email_verified == true));
+    }
+    
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+    
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+    
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidProject(data) {
+      return hasRequiredFields(['title', 'agency', 'status', 'uid']) &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             data.agency is string && data.agency.size() > 0 && data.agency.size() < 100 &&
+             data.status in ['待评审', '评审中', '已评审', '标书编写中', '已完成', '已放弃'] &&
+             data.uid == request.auth.uid;
+    }
+
+    function isValidUser(data) {
+      return hasRequiredFields(['uid', 'email', 'role']) &&
+             data.uid == request.auth.uid &&
+             isValidEmail(data.email) &&
+             data.role in ['admin', 'user'];
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow create: if isAuthenticated() && isOwner(userId) && isValidUser(request.resource.data) && (request.resource.data.role == 'user' || isAdmin());
+      allow update: if isAuthenticated() && isOwner(userId) && isValidUser(request.resource.data) && (request.resource.data.role == resource.data.role || isAdmin());
+    }
+
+    match /projects/{projectId} {
+      allow read: if isAuthenticated() && (isDocOwner() || isAdmin());
+      allow create: if isAuthenticated() && isValidProject(request.resource.data);
+      allow update: if isAuthenticated() && isDocOwner() && isValidProject(request.resource.data);
+      allow delete: if isAuthenticated() && (isDocOwner() || isAdmin());
+    }
+
+    match /qualifications/{id} {
+      allow read: if isAuthenticated() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && request.resource.data.uid == request.auth.uid;
+      allow update: if isAuthenticated() && resource.data.uid == request.auth.uid && request.resource.data.uid == request.auth.uid;
+      allow delete: if isAuthenticated() && (resource.data.uid == request.auth.uid || isAdmin());
+    }
+
+    match /personnel/{id} {
+      allow read: if isAuthenticated() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && request.resource.data.uid == request.auth.uid;
+      allow update: if isAuthenticated() && resource.data.uid == request.auth.uid && request.resource.data.uid == request.auth.uid;
+      allow delete: if isAuthenticated() && (resource.data.uid == request.auth.uid || isAdmin());
+    }
+
+    match /performances/{id} {
+      allow read: if isAuthenticated() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && request.resource.data.uid == request.auth.uid;
+      allow update: if isAuthenticated() && resource.data.uid == request.auth.uid && request.resource.data.uid == request.auth.uid;
+      allow delete: if isAuthenticated() && (resource.data.uid == request.auth.uid || isAdmin());
+    }
+
+    match /standards/{id} {
+      allow read: if isAuthenticated() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && request.resource.data.uid == request.auth.uid;
+      allow update: if isAuthenticated() && resource.data.uid == request.auth.uid && request.resource.data.uid == request.auth.uid;
+      allow delete: if isAuthenticated() && (resource.data.uid == request.auth.uid || isAdmin());
+    }
+  }
+}

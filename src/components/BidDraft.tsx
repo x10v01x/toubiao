@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { ChevronRight, FileCode, Download, ExternalLink, AlertCircle, Check, Save, RotateCcw, Zap, FileText, Layout, MessageSquare, Settings, Activity, Search, Share2, Printer, MoreVertical, X, Loader2 } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
+import ReactMarkdown from 'react-markdown';
+import { Document, Packer, Paragraph, TextRun } from 'docx';
+import { saveAs } from 'file-saver';
 
 interface BidDraftProps {
   onNext: (view: string) => void;
@@ -25,6 +28,8 @@ export const BidDraft = ({ onNext }: BidDraftProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedContent, setGeneratedContent] = useState<Record<string, string>>({});
+  const [outputFormat, setOutputFormat] = useState<'markdown' | 'word'>('markdown');
+  const [writingStyle, setWritingStyle] = useState<'professional' | 'innovative' | 'concise'>('professional');
 
   const activeChapter = CHAPTERS.flatMap(c => c.subChapters ? [c, ...c.subChapters] : [c]).find(c => c.id === activeChapterId);
 
@@ -34,14 +39,20 @@ export const BidDraft = ({ onNext }: BidDraftProps) => {
     setIsGenerating(true);
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const stylePrompts = {
+        professional: '语言专业、严谨，符合传统招投标规范。',
+        innovative: '语言富有创新性，强调前沿技术应用和差异化竞争优势。',
+        concise: '语言简练、直击重点，适合快节奏评审。'
+      };
+
       const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
         contents: `你是一位资深的投标书编写专家。请为招标项目“XX市智慧城市基础设施监控管理系统”编写标书中的“${activeChapter.title}”章节。
         要求：
-        1. 语言专业、严谨。
+        1. ${stylePrompts[writingStyle]}
         2. 结合智慧城市、物联网、大数据等前沿技术。
         3. 篇幅适中，约300-500字。
-        4. 使用 Markdown 格式。
+        4. 使用 ${outputFormat === 'markdown' ? 'Markdown' : '标准的公文 Word'} 格式。
         5. 仅返回章节正文内容。`,
       });
 
@@ -149,14 +160,87 @@ export const BidDraft = ({ onNext }: BidDraftProps) => {
               AI 编写引擎 / v1.0.4
             </div>
             <div className="h-6 w-px bg-slate-200" />
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest">输出格式:</span>
+              <select 
+                value={outputFormat}
+                onChange={(e) => setOutputFormat(e.target.value as 'markdown' | 'word')}
+                className="bg-transparent text-[10px] font-mono font-bold text-slate-900 uppercase tracking-widest focus:outline-none cursor-pointer"
+              >
+                <option value="markdown">Markdown</option>
+                <option value="word">Word (Docx)</option>
+              </select>
+            </div>
+            <div className="h-6 w-px bg-slate-200" />
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest">写作风格:</span>
+              <select 
+                value={writingStyle}
+                onChange={(e) => setWritingStyle(e.target.value as 'professional' | 'innovative' | 'concise')}
+                className="bg-transparent text-[10px] font-mono font-bold text-slate-900 uppercase tracking-widest focus:outline-none cursor-pointer"
+              >
+                <option value="professional">专业严谨</option>
+                <option value="innovative">技术创新</option>
+                <option value="concise">简练高效</option>
+              </select>
+            </div>
+            <div className="h-6 w-px bg-slate-200" />
             <div className="text-sm font-bold text-slate-900 tracking-tight">{activeChapter?.title}</div>
           </div>
           <div className="flex items-center gap-1">
-            {[Save, Download, Share2, Printer, MoreVertical].map((Icon, i) => (
-              <button key={i} className="p-2.5 text-slate-400 hover:text-slate-900 hover:bg-slate-50 transition-all rounded-lg">
-                <Icon size={18} />
-              </button>
-            ))}
+            <button className="p-2.5 text-slate-400 hover:text-slate-900 hover:bg-slate-50 transition-all rounded-lg" title="保存">
+              <Save size={18} />
+            </button>
+            <button 
+              onClick={async () => {
+                if (outputFormat === 'markdown') {
+                  const blob = new Blob([currentContent || ''], { type: 'text/markdown' });
+                  saveAs(blob, `标书章节-${activeChapter?.title}.md`);
+                } else {
+                  // Generate Word document
+                  const doc = new Document({
+                    sections: [{
+                      properties: {},
+                      children: [
+                        new Paragraph({
+                          children: [
+                            new TextRun({
+                              text: activeChapter?.title || '标书章节',
+                              bold: true,
+                              size: 32,
+                            }),
+                          ],
+                        }),
+                        new Paragraph({
+                          children: [
+                            new TextRun({
+                              text: currentContent || '',
+                              size: 24,
+                            }),
+                          ],
+                        }),
+                      ],
+                    }],
+                  });
+
+                  const blob = await Packer.toBlob(doc);
+                  saveAs(blob, `标书章节-${activeChapter?.title}.docx`);
+                }
+              }}
+              className="p-2.5 text-slate-400 hover:text-slate-900 hover:bg-slate-50 transition-all rounded-lg" 
+              title={`导出为 ${outputFormat.toUpperCase()}`}
+            >
+              <Download size={18} />
+            </button>
+            <button className="p-2.5 text-slate-400 hover:text-slate-900 hover:bg-slate-50 transition-all rounded-lg" title="分享">
+              <Share2 size={18} />
+            </button>
+            <button className="p-2.5 text-slate-400 hover:text-slate-900 hover:bg-slate-50 transition-all rounded-lg" title="打印">
+              <Printer size={18} />
+            </button>
+            <button className="p-2.5 text-slate-400 hover:text-slate-900 hover:bg-slate-50 transition-all rounded-lg" title="更多">
+              <MoreVertical size={18} />
+            </button>
           </div>
         </div>
 
@@ -201,8 +285,12 @@ export const BidDraft = ({ onNext }: BidDraftProps) => {
                       <div className="text-sm font-bold text-slate-400 uppercase tracking-widest animate-pulse">AI 正在深度创作中...</div>
                     </div>
                   ) : (
-                    <div className="whitespace-pre-wrap">
-                      {currentContent || '内容生成中...'}
+                    <div className={`prose prose-slate max-w-none ${outputFormat === 'word' ? 'font-serif' : 'font-sans'}`}>
+                      {currentContent ? (
+                        <ReactMarkdown>{currentContent}</ReactMarkdown>
+                      ) : (
+                        <div className="text-slate-300 italic">内容生成中...</div>
+                      )}
                     </div>
                   )}
                 </div>

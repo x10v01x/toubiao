@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Award, Users, FileSearch, BookOpen, ChevronRight, ShieldCheck, Database, History, Search, ArrowUpRight, Activity, Zap, X, Send, Loader2 } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
+import ReactMarkdown from 'react-markdown';
 
 interface KnowledgeBaseProps {
   onViewChange: (view: string) => void;
@@ -87,8 +88,8 @@ export const KnowledgeBase = ({ onViewChange }: KnowledgeBaseProps) => {
                     <div className="h-px w-8 bg-emerald-500/30"></div>
                     <span className="text-[8px] font-mono font-bold text-slate-500 uppercase tracking-widest">AI 响应</span>
                   </div>
-                  <div className="p-6 bg-slate-900/50 border-l-2 border-emerald-500 text-slate-300 text-xs leading-relaxed font-mono whitespace-pre-wrap">
-                    {answer}
+                  <div className="p-6 bg-slate-900/50 border-l-2 border-emerald-500 text-slate-300 text-xs leading-relaxed font-mono prose prose-invert prose-sm max-w-none">
+                    <ReactMarkdown>{answer}</ReactMarkdown>
                   </div>
                 </div>
               )}

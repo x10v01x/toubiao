@@ -1,5 +1,6 @@
-import React from 'react';
-import { LayoutGrid, ClipboardCheck, FileText, Users, FileSearch, Bell, User, Menu, Award, Database } from 'lucide-react';
+import React, { useState } from 'react';
+import { LayoutGrid, ClipboardCheck, FileText, Users, FileSearch, Bell, User, Menu, Award, Database, Search, X, ChevronRight, LogOut } from 'lucide-react';
+import { useFirebase } from './FirebaseProvider';
 
 interface SidebarItemProps {
   icon: any;
@@ -25,6 +26,7 @@ interface LayoutProps {
 }
 
 export const Layout = ({ children, currentView, onViewChange }: LayoutProps) => {
+  const { user, logout } = useFirebase();
   const getNodeName = () => {
     switch (currentView) {
       case 'dashboard': return '系统概览';
@@ -42,6 +44,8 @@ export const Layout = ({ children, currentView, onViewChange }: LayoutProps) => 
       default: return '系统概览';
     }
   };
+
+  const [globalSearch, setGlobalSearch] = useState('');
 
   return (
     <div className="flex h-screen bg-slate-50">
@@ -95,14 +99,25 @@ export const Layout = ({ children, currentView, onViewChange }: LayoutProps) => 
         </nav>
 
         <div className="p-4 border-t border-slate-100">
-          <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer">
-            <div className="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center text-slate-500">
-              <User size={18} />
+          <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 transition-colors group relative">
+            <div className="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center text-slate-500 overflow-hidden">
+              {user?.photoURL ? (
+                <img src={user.photoURL} alt={user.displayName || ''} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              ) : (
+                <User size={18} />
+              )}
             </div>
             <div className="flex-1 overflow-hidden">
-              <div className="text-xs font-bold text-slate-900 truncate">投标部 - 张经理</div>
-              <div className="text-[10px] text-slate-400 truncate">joseluckeyhkd@gmail.com</div>
+              <div className="text-xs font-bold text-slate-900 truncate">{user?.displayName || '用户'}</div>
+              <div className="text-[10px] text-slate-400 truncate">{user?.email}</div>
             </div>
+            <button 
+              onClick={logout}
+              className="p-1.5 text-slate-400 hover:text-rose-500 transition-colors"
+              title="退出登录"
+            >
+              <LogOut size={14} />
+            </button>
           </div>
         </div>
       </aside>
@@ -111,12 +126,67 @@ export const Layout = ({ children, currentView, onViewChange }: LayoutProps) => 
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <header className="h-16 bg-white border-b border-slate-200 px-8 flex items-center justify-between z-10 shrink-0">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-1 max-w-xl">
             <button className="p-2 text-slate-400 hover:text-slate-900 lg:hidden">
               <Menu size={20} />
             </button>
             <div className="h-4 w-px bg-slate-200 hidden lg:block"></div>
-            <div className="text-sm text-slate-500 hidden lg:block">
+            <div className="relative flex-1 hidden lg:block">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input 
+                type="text" 
+                placeholder="全局搜索项目、资质、人员或标准..." 
+                className="w-full pl-9 pr-8 py-2 bg-slate-50 border border-slate-200 text-xs font-bold focus:outline-none focus:border-slate-900 transition-colors"
+                value={globalSearch}
+                onChange={(e) => setGlobalSearch(e.target.value)}
+              />
+              {globalSearch && (
+                <>
+                  <button 
+                    onClick={() => setGlobalSearch('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-900 transition-colors"
+                  >
+                    <X size={12} />
+                  </button>
+                  {/* Search Results Dropdown */}
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 shadow-2xl z-50 p-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest mb-4">搜索结果</div>
+                    <div className="space-y-4 max-h-[400px] overflow-y-auto custom-scrollbar">
+                      {[
+                        { type: '项目', title: '智慧城市二期建设项目', id: 'PRJ-2024-001' },
+                        { type: '资质', title: '电子与智能化工程专业承包一级', id: 'QUAL-001' },
+                        { type: '人员', title: '张三 - 高级工程师', id: 'PER-001' },
+                        { type: '标准', title: 'GB/T 19001-2016 质量管理体系', id: 'STD-001' },
+                      ].filter(item => item.title.includes(globalSearch) || item.id.includes(globalSearch)).map((item, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-3 hover:bg-slate-50 cursor-pointer group transition-colors border border-transparent hover:border-slate-200">
+                          <div className="flex items-center gap-4">
+                            <div className="w-8 h-8 bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-slate-900 group-hover:text-white transition-colors">
+                              <FileText size={14} />
+                            </div>
+                            <div>
+                              <div className="text-xs font-bold text-slate-900">{item.title}</div>
+                              <div className="text-[10px] font-mono text-slate-400 uppercase">{item.type} · {item.id}</div>
+                            </div>
+                          </div>
+                          <ChevronRight size={14} className="text-slate-300 group-hover:text-slate-900 transition-colors" />
+                        </div>
+                      ))}
+                      {globalSearch.length > 0 && [
+                        { type: '项目', title: '智慧城市二期建设项目', id: 'PRJ-2024-001' },
+                        { type: '资质', title: '电子与智能化工程专业承包一级', id: 'QUAL-001' },
+                        { type: '人员', title: '张三 - 高级工程师', id: 'PER-001' },
+                        { type: '标准', title: 'GB/T 19001-2016 质量管理体系', id: 'STD-001' },
+                      ].filter(item => item.title.includes(globalSearch) || item.id.includes(globalSearch)).length === 0 && (
+                        <div className="py-8 text-center text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest">
+                          未找到匹配结果
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+            <div className="text-sm text-slate-500 hidden lg:block whitespace-nowrap">
               当前节点：<span className="text-slate-900 font-medium">{getNodeName()}</span>
             </div>
           </div>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { CheckCircle2, AlertTriangle, ArrowRight, Zap, Target, ShieldAlert, Info, Activity, ChevronRight, RotateCcw, XCircle, History, Check, AlertCircle, BarChart3, ShieldCheck, Loader2 } from 'lucide-react';
+import { motion } from 'motion/react';
 import { Project } from '../types';
 
 interface ReviewResultProps {
@@ -76,6 +77,45 @@ export const ReviewResult = ({ project, onBack, onNext }: ReviewResultProps) => 
               <p className="text-2xl font-medium leading-relaxed tracking-tight italic font-serif text-slate-100">
                 "当前项目整体具备投标基础。我司核心资质完全覆盖招标要求，且在同类智慧城市项目中具备显著的业绩优势。虽然在部分特定人员证书上存在缺口，但可通过内部调配或临时聘用解决。"
               </p>
+            </div>
+          </section>
+
+          <section className="bg-white border border-slate-200 p-10 space-y-8 shadow-sm">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-6">
+              <div className="space-y-1">
+                <h3 className="text-[10px] font-mono font-bold text-slate-900 uppercase tracking-[0.3em]">量化评审矩阵</h3>
+                <p className="text-[10px] text-slate-400 font-mono uppercase tracking-widest">Quantitative Scoring Matrix</p>
+              </div>
+              <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest">基于 12 个核心维度</div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-x-12 gap-y-8">
+              {[
+                { label: '市场匹配度', score: 95, desc: '项目所属行业与我司主营业务高度契合' },
+                { label: '技术实力', score: 88, desc: '核心技术方案成熟，人员证书略有缺口' },
+                { label: '财务稳健性', score: 92, desc: '公司财务指标完全满足招标要求' },
+                { label: '战略价值', score: 85, desc: '有助于深耕本地市场，建立标杆案例' },
+                { label: '竞争压力', score: 70, desc: '预计有 3-5 家强力竞争对手参与' },
+                { label: '利润空间', score: 78, desc: '预算充足，预计毛利率处于行业中上游' },
+              ].map((item, idx) => (
+                <div key={idx} className="space-y-3">
+                  <div className="flex justify-between items-end">
+                    <div className="space-y-1">
+                      <div className="text-xs font-bold text-slate-900">{item.label}</div>
+                      <div className="text-[10px] text-slate-400 italic font-serif">{item.desc}</div>
+                    </div>
+                    <div className="text-lg font-bold text-slate-900 font-mono">{item.score}</div>
+                  </div>
+                  <div className="h-1 w-full bg-slate-100 overflow-hidden">
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      animate={{ width: `${item.score}%` }}
+                      transition={{ duration: 1, delay: idx * 0.1 }}
+                      className={`h-full ${item.score > 90 ? 'bg-emerald-500' : item.score > 80 ? 'bg-blue-500' : 'bg-amber-500'}`}
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
           </section>
 

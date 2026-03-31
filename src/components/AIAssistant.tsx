@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MessageSquare, X, Send, Sparkles, User, Bot, ChevronDown, Loader2, Zap, Activity, ShieldCheck, Terminal, Trash2, Copy, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { GoogleGenAI } from "@google/genai";
+import ReactMarkdown from 'react-markdown';
 import { Project } from '../types';
 
 interface AIAssistantProps {
@@ -179,7 +180,13 @@ export const AIAssistant = ({ selectedProject, currentView }: AIAssistantProps) 
                         ? 'bg-slate-800 text-white border-r-2 border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.1)]' 
                         : 'bg-slate-900/50 text-slate-300 border-l-2 border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.1)]'
                     }`}>
-                      {msg.text}
+                      {msg.role === 'bot' ? (
+                        <div className="prose prose-invert prose-sm max-w-none font-mono">
+                          <ReactMarkdown>{msg.text}</ReactMarkdown>
+                        </div>
+                      ) : (
+                        msg.text
+                      )}
                       <button 
                         onClick={() => handleCopy(msg.text, msg.id)}
                         className="absolute top-2 right-2 p-1 bg-slate-900/80 text-slate-500 hover:text-white opacity-0 group-hover/msg:opacity-100 transition-all"
